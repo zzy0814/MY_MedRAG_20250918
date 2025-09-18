@@ -1,30 +1,64 @@
-import openai
-import faiss
-import numpy as np
-import os
-import re
-import json
-import pandas as pd
-from tqdm import tqdm
-from huggingface_hub import InferenceClient
-from KG_Retrieve import main_get_category_and_level3
-from authentication import api_key,hf_token
+# 导入必要的库
+import openai  # OpenAI API调用库，用于调用OpenAI的模型接口
+import faiss  # 高效相似性搜索库，用于快速向量检索
+import numpy as np  # 数值计算库，用于处理数组和矩阵
+import os  # 操作系统接口库，用于文件和目录操作
+import re  # 正则表达式操作库，用于文本模式匹配
+import json  # JSON数据解析库，用于处理JSON格式数据
+import pandas as pd  # 数据处理和分析库，用于表格数据处理
+from tqdm import tqdm  # 进度条显示库，用于显示任务进度
+from huggingface_hub import InferenceClient  # Hugging Face模型推理客户端，用于调用开源模型
+from KG_Retrieve import main_get_category_and_level3  # 知识图谱检索模块，用于获取类别信息
+from authentication import api_key,hf_token  # API密钥和令牌，用于身份验证
 
+# 初始化OpenAI客户端
 client = openai.OpenAI(api_key=api_key)
 
 def get_embeddings(texts):
+    """
+    获取文本的嵌入向量
+
+    
+    该函数使用指定的模型将输入的文本列表转换为嵌入向量数组。
+    使用tqdm库显示进度条，便于处理大量文本时了解进度。
+    :param texts: 文本列表，可以是字符串或字符串列表
+
+    :type texts: list or str
+    :return: 文本的嵌入向量数组，形状为(len(texts), embedding_dim)
+    :rtype: numpy.ndarray
+    示例:
+        >>> texts = ["Hello world", "How are you"]
+        >>> embeddings = get_embeddings(texts)
+        >>> print(embeddings.shape)  # 输出: (2, 3072)
+    """
+    # 初始化空列表用于存储嵌入向量
     embeddings = []
+    # 遍历输入的文本列表，使用tqdm显示进度条
     for text in tqdm(texts):
+        # 调用API获取文本的嵌入向量
         response = client.embeddings.create(
-            input=text,
-            model="text-embedding-3-large"
+            input=text,           # 输入文本
+            model="text-embedding-3-large"  # 使用的嵌入模型
         )
+        # 将获取的嵌入向量添加到列表中
+        # response.data[0].embedding 包含文本的嵌入向量
         embeddings.append(response.data[0].embedding)
+    # 将列表转换为NumPy数组并返回
     return np.array(embeddings)
 
 
 def get_query_embedding(query):
-    return get_embeddings([query])[0]
+    """
+    获取查询文本的嵌入向量
+
+    
+    该函数接收一个查询文本，通过调用get_embeddings函数获取其嵌入向量，
+    并返回结果列表中的第一个元素。这通常用于文本相似度计算或
+    自然语言处理任务中的文本表示。
+    :param query: 查询文本，可以是任意字符串形式的输入
+    :return: 查询文本的嵌入向量，通常是一个数值列表或数组
+    """
+    return get_embeddings([query])[0]  # 将查询文本放入列表并调用get_embeddings，返回结果中的第一个元素
 
 
 # FAISS

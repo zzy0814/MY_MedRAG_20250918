@@ -75,6 +75,7 @@ def extract_diagnosis(generated_text):
     diagnoses = re.findall(r'\*\*Diagnosis\*\*:\s(.*?)\n', generated_text)
     return diagnoses
 
+import re  # 导入re模块，用于正则表达式操作
 def remove_parentheses(text):
     return re.sub(r'\(.*?\)', '', text).strip()
 
@@ -175,8 +176,15 @@ def get_additional_info_from_level_2(participant_no,  kg_path,top_n,match_n):
 
 
 def get_system_prompt_for_RAGKG():
+    """
+    返回一个用于RAG（检索增强生成）知识图谱的系统提示，该提示指导AI作为医学助手进行疼痛管理。
+    返回:
+        str: 包含详细指导的系统提示文本，规定了AI在诊断、治疗和建议方面的行为准则。
+    """
     return '''
+        # 角色定义
         You are a knowledgeable medical assistant with expertise in pain management.
+        # 任务描述
         Your tasks are:
         1. Analyse and refer to the retrieved similar patients' cases and knowledge graph which may be relevant to the diagnosis and assist with new patient cases.
 2. Output of "Diagnoses" must come from : acute copd exacerbation infection, bronchiectasis, bronchiolitis, bronchitis, bronchospasm acute asthma exacerbation, pulmonary embolism, pulmonary neoplasm, spontaneous pneumothorax, urti, viral pharyngitis, whooping cough, acute laryngitis, acute pulmonary edema, croup, larygospasm, epiglottitis, pneumonia, atrial fibrillation, myocarditis, pericarditis, psvt, possible nstemi stemi, stable angina, unstable angina, gerd, boerhaave syndrome, pancreatic neoplasm, scombroid food poisoning, inguinal hernia, tuberculosis, hiv initial infection, ebola, influenza, chagas, acute otitis media, acute rhinosinusitis, allergic sinusitis, chronic rhinosinusitis, myasthenia gravis, guillain barre syndrome, cluster headache, acute dystonic reactions, sle, sarcoidosis, anaphylaxis, panic attack, spontaneous rib fracture, anemia.        3. You are given differences of diagnoses of similar symptoms or pain locations. Read that information as a reference to your diagnostic if applicable.

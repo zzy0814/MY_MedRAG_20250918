@@ -1,28 +1,34 @@
 
-import openai
-import pandas as pd
-import re
-import numpy as np
-from tqdm import tqdm
-from sklearn.metrics.pairwise import cosine_similarity
-import networkx as nx
-import matplotlib.pyplot as plt
-import nltk
-from nltk.tokenize import word_tokenize
-from nltk.corpus import stopwords
-import string
-import os
-from collections import defaultdict
+# 导入必要的库
+import openai  # OpenAI API接口
+import pandas as pd  # 数据处理
+import re  # 正则表达式
+import numpy as np  # 数值计算
+from tqdm import tqdm  # 进度条
+from sklearn.metrics.pairwise import cosine_similarity  # 余弦相似度计算
+import networkx as nx  # 图论分析
+import matplotlib.pyplot as plt  # 数据可视化
+import nltk  # 自然语言处理
+from nltk.tokenize import word_tokenize  # 分词
+from nltk.corpus import stopwords  # 停用词
+import string  # 字符串处理
+import os  # 操作系统接口
+from collections import defaultdict  # 默认字典
 
+# 下载NLTK所需资源
 nltk.download('punkt')
 nltk.download('stopwords')
 
+# 设置OpenAI API密钥
 api_key = ''
 client = openai.OpenAI(api_key=api_key)
 
-KG_file_path = './dataset/knowledge graph of chronic pain.xlsx'
-file_path = './dataset/AI Data Set with Categories.csv'
-embedding_save_path = './Embeddings_saved/CP_KG_embeddings'
+
+
+# 定义文件路径
+KG_file_path = './dataset/knowledge graph of chronic pain.xlsx'  # 知识图谱数据路径
+file_path = './dataset/AI Data Set with Categories.csv'  # 数据集路径
+embedding_save_path = './Embeddings_saved/CP_KG_embeddings'  # 词向量保存路径
 
 
 

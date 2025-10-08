@@ -1,17 +1,23 @@
 
+# 导入pandas库，用于数据处理
 import pandas as pd
 
+# 定义结果文件路径和真实标签文件路径的变量
 result_file_path = ''
 ground_truth_file_path = ''
 
 
 def get_ACC(result_file_path, ground_truth_file_path):
+    # 读取结果文件并删除包含空值的行
     df_result = pd.read_csv(result_file_path).dropna()
+    # 读取真实标签文件
     df_ground_truth = pd.read_csv(ground_truth_file_path)
 
+    # 将结果文件和真实标签文件按照患者ID进行合并
     merged_df = pd.merge(df_result, df_ground_truth[['PATIENT_ID', 'Filtered_Diagnoses']],
                          left_on='Participant No.', right_on='PATIENT_ID', how='left')
 
+    # 定义诊断到类别的映射字典，包含三个层级：器官系统、具体系统和具体疾病
     diagnosis_to_category = {
         # Organ Systems
         "acute copd exacerbation infection": (

@@ -1,6 +1,6 @@
 # 导入必要的库
 import openai  # OpenAI API调用库，用于调用OpenAI的模型接口
-import deepseek as ds
+from deepseek import DeepSeek  # DeepSeek库，用于处理向量搜索和相似性匹配
 import faiss  # 高效相似性搜索库，用于快速向量检索
 import numpy as np  # 数值计算库，用于处理数组和矩阵
 import os  # 操作系统接口库，用于文件和目录操作
@@ -10,11 +10,14 @@ import pandas as pd  # 数据处理和分析库，用于表格数据处理
 from tqdm import tqdm  # 进度条显示库，用于显示任务进度
 from huggingface_hub import InferenceClient  # Hugging Face模型推理客户端，用于调用开源模型
 from KG_Retrieve import main_get_category_and_level3  # 知识图谱检索模块，用于获取类别信息
-from authentication import api_key,hf_token  # API密钥和令牌，用于身份验证
+from authentication import api_key,hf_token,DEEPSEEK_API_KEY  # API密钥和令牌，用于身份验证
 
 # 初始化OpenAI客户端
-client = openai.OpenAI(api_key=api_key)
-
+#client = openai.OpenAI(api_key=api_key)
+#初始化deepseek
+client =openai.OpenAI(
+    api_key=DEEPSEEK_API_KEY,
+    base_url="https://api.deepseek.com")
 def get_embeddings(texts):
     """
     获取文本的嵌入向量

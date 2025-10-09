@@ -5,7 +5,9 @@ import json  # 用于JSON数据的编码和解码
 import pandas as pd  # 用于数据处理和分析
 from tqdm import tqdm  # 用于创建进度条
 # 从main_MedRAG模块导入多个函数和类
-from main_MedRAG import get_query_embedding, Faiss,  extract_diagnosis, documents, document_embeddings,generate_diagnosis_report, save_results_to_csv, get_additional_info_from_level_2,KG_preprocess, get_embeddings
+#from main_MedRAG import get_query_embedding, Faiss,  extract_diagnosis, documents, document_embeddings,generate_diagnosis_report, save_results_to_csv, get_additional_info_from_level_2,KG_preprocess, get_embeddings
+from main_MedRAG_copy import get_query_embedding, Faiss,  extract_diagnosis, documents, document_embeddings,generate_diagnosis_report, save_results_to_csv, get_additional_info_from_level_2,KG_preprocess, get_embeddings
+
 # 从authentication模块导入路径变量
 from authentication import ob_path,test_folder_path,ground_truth_file_path,augmented_features_path
 

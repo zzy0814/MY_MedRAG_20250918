@@ -1,6 +1,6 @@
 # 导入必要的库
 import openai  # OpenAI API调用库，用于调用OpenAI的模型接口
-from deepseek import DeepSeek  # DeepSeek库，用于处理向量搜索和相似性匹配
+#from deepseek import DeepSeek  # DeepSeek库，用于处理向量搜索和相似性匹配
 import faiss  # 高效相似性搜索库，用于快速向量检索
 import numpy as np  # 数值计算库，用于处理数组和矩阵
 import os  # 操作系统接口库，用于文件和目录操作
@@ -40,9 +40,15 @@ def get_embeddings(texts):
     # 遍历输入的文本列表，使用tqdm显示进度条
     for text in tqdm(texts):
         # 调用API获取文本的嵌入向量
+        '''
         response = client.embeddings.create(
             input=text,           # 输入文本
             model="text-embedding-3-large"  # 使用的嵌入模型
+        )
+        '''
+        response= client.embeddings.create(
+            input=text,           # 输入文本
+            model="deepseek-embed"  # 使用的嵌入模型
         )
         # 将获取的嵌入向量添加到列表中
         # response.data[0].embedding 包含文本的嵌入向量
@@ -275,8 +281,32 @@ def save_results_to_csv(results, output_file):
 
 
 folder_path=".dataset/df/train"
+
+'''
 documents = [os.path.join(folder_path, file_name) for file_name in os.listdir(folder_path) if
              os.path.isfile(os.path.join(folder_path, file_name))]
+'''
+
+'''
+# 初始化一个空列表，用于存储文件路径
+documents=[]
+# 遍历指定文件夹中的所有文件和子文件夹
+for file_name in os.listdir(folder_path):
+    # 将文件名与文件夹路径合并，得到完整的文件路径
+    full_path=os.path.join(folder_path,file_name)
+    # 检查该路径是否为文件（而不是文件夹）
+    if os.path.isfile(full_path):
+        # 如果是文件，则将其完整路径添加到列表中
+        documents.append(full_path)
+'''
+
+def get_documets():  
+    documents=[]  # 初始化一个空列表，用于存储文件路径
+    for file_name in os.listdir(folder_path):  # 遍历指定文件夹中的所有文件和文件夹
+        full_path = os.path.join(folder_path, file_name)  # 将文件夹路径和文件名合并为完整路径
+        if os.path.isfile(full_path):  # 检查该路径是否为文件
+            documents.append(full_path)  # 如果是文件，则将其完整路径添加到列表中
+    return documents  # 返回包含所有文件路径的列表
 
 document_embeddings_file_path='./dataset/document_embeddings.npy'
 
@@ -288,5 +318,5 @@ def load_embeddings(file_path):
 if os.path.exists(document_embeddings_file_path):
     document_embeddings = load_embeddings(document_embeddings_file_path)
 else:
-    document_embeddings = get_embeddings(documents)
+    document_embeddings = get_embeddings(get_documets())
     save_embeddings(document_embeddings, document_embeddings_file_path)

@@ -73,8 +73,11 @@ for i in tqdm(samplerange):
             # 处理每个检索到的文档
             for retrieved_document in retrieved_documents:
                 with open(retrieved_document, 'r') as file:
+                     # 加载JSON格式的患者病例数据
                     patient_case = json.load(file)
+                    # 将患者病例数据转换为JSON字符串
                     patient_case_json = json.dumps(patient_case)
+                     # 将JSON字符串重新解析为Python字典对象
                     patient_case_dict = json.loads(patient_case_json)
                     # 过滤出需要的字段
                     filtered_patient_case_dict = {
@@ -87,6 +90,21 @@ for i in tqdm(samplerange):
                             "Pain Medicine Treatments (Treatments)",
                         ] if key in patient_case_dict
                     }
+                    '''# 定义需要提取的6个关键字段
+                    selected_keys = ['basic_info', 'chief_complaint', 'present_illness_history', 
+                                    'past_illness_history', 'physical_examination', 'auxiliary_examination']
+
+                    # 初始化过滤后的字典
+                    filtered_patient_case_dict = {}
+
+                    # 遍历指定的键列表，检查patient_case_dict中是否存在这些键
+                    for key in selected_keys:
+                        if key in patient_case_dict:
+                            # 如果键存在于原始字典中，则将其添加到过滤后的字典中
+                            filtered_patient_case_dict[key] = patient_case_dict[key]
+                    '''
+
+
                     final_retrieved_info.append(filtered_patient_case_dict)
 
     # ——————————————————————————————————————————————————————————————————————————————————

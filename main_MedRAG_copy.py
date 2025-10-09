@@ -74,9 +74,12 @@ def get_query_embedding(query):
 # FAISS
 def Faiss(document_embeddings, query_embedding, k):
     # index = faiss.IndexFlatL2(document_embeddings.shape[1])
+     # 创建FAISS索引，使用内积相似度度量
     index = faiss.IndexFlatIP(document_embeddings.shape[1])
     # index = faiss.IndexHNSWFlat(document_embeddings.shape[1])
+    # 将文档嵌入向量添加到索引中
     index.add(document_embeddings)
+    # 执行相似性搜索，找到与查询向量最相似的k个文档
     _, indices = index.search(np.array([query_embedding]), k)
     print("index: ", indices)
     return indices
@@ -307,6 +310,8 @@ def get_documets():
         if os.path.isfile(full_path):  # 检查该路径是否为文件
             documents.append(full_path)  # 如果是文件，则将其完整路径添加到列表中
     return documents  # 返回包含所有文件路径的列表
+documents=get_documets()
+
 
 document_embeddings_file_path='./dataset/document_embeddings.npy'
 
@@ -318,5 +323,5 @@ def load_embeddings(file_path):
 if os.path.exists(document_embeddings_file_path):
     document_embeddings = load_embeddings(document_embeddings_file_path)
 else:
-    document_embeddings = get_embeddings(get_documets())
+    document_embeddings = get_embeddings(documents)
     save_embeddings(document_embeddings, document_embeddings_file_path)

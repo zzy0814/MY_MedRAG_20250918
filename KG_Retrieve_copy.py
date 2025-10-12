@@ -14,14 +14,21 @@ from nltk.corpus import stopwords  # 停用词
 import string  # 字符串处理
 import os  # 操作系统接口
 from collections import defaultdict  # 默认字典
+from authentication import DEEPSEEK_API_KEY,DEEPSEEK_URL
+
 
 # 下载NLTK所需资源
 nltk.download('punkt')
 nltk.download('stopwords')
 
 # 设置OpenAI API密钥
-api_key = ''
-client = openai.OpenAI(api_key=api_key)
+#api_key = ''
+api_key = DEEPSEEK_API_KEY
+#初始化deepseek
+#client = openai.OpenAI(api_key=api_key)
+client =openai.OpenAI(
+    api_key=DEEPSEEK_API_KEY,
+    base_url=DEEPSEEK_URL)
 
 
 
@@ -77,7 +84,8 @@ def get_symptom_embeddings(symptom_nodes, save_path):
         for symptom in tqdm(symptom_nodes):
             response = client.embeddings.create(
                 input=symptom,
-                model="text-embedding-3-large"
+                #model="text-embedding-3-large"
+                model="deepseek-embed"
             )
             symptom_embeddings.append(response.data[0].embedding)
         np.save(embeddings_path, symptom_embeddings)

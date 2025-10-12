@@ -9,15 +9,16 @@ import json  # JSON数据解析库，用于处理JSON格式数据
 import pandas as pd  # 数据处理和分析库，用于表格数据处理
 from tqdm import tqdm  # 进度条显示库，用于显示任务进度
 from huggingface_hub import InferenceClient  # Hugging Face模型推理客户端，用于调用开源模型
-from KG_Retrieve import main_get_category_and_level3  # 知识图谱检索模块，用于获取类别信息
-from authentication import api_key,hf_token,DEEPSEEK_API_KEY  # API密钥和令牌，用于身份验证
+#from KG_Retrieve import main_get_category_and_level3  # 知识图谱检索模块，用于获取类别信息
+from KG_Retrieve_copy import main_get_category_and_level3  # 知识图谱检索模块，用于获取类别信息
+from authentication import api_key,hf_token,DEEPSEEK_API_KEY,DEEPSEEK_URL # API密钥和令牌，用于身份验证
 
 # 初始化OpenAI客户端
 #client = openai.OpenAI(api_key=api_key)
 #初始化deepseek
 client =openai.OpenAI(
     api_key=DEEPSEEK_API_KEY,
-    base_url="https://api.deepseek.com")
+    base_url=DEEPSEEK_URL)
 def get_embeddings(texts):
     """
     获取文本的嵌入向量
@@ -48,7 +49,8 @@ def get_embeddings(texts):
         '''
         response= client.embeddings.create(
             input=text,           # 输入文本
-            model="deepseek-embed"  # 使用的嵌入模型
+            model="deepseek-embed" 
+            #model="text-embedding-3-large"  # 使用的嵌入模型
         )
         # 将获取的嵌入向量添加到列表中
         # response.data[0].embedding 包含文本的嵌入向量
@@ -136,33 +138,58 @@ level_3_to_level_2 = {
 
 }
 
-
 def get_additional_info_from_level_2(participant_no,  kg_path,top_n,match_n):
+    """
+    根据参与者编号，从知识图谱中获取与 Level 2 关联的附加信息。
+
+    参数:
+        participant_no (int): 参与者编号，用于查询 Level 3 数据。
+        kg_path (str): 知识图谱 Excel 文件的路径。
+        top_n (int): 选取前 N 个最相关的 Level 3 数据。
+        match_n (int): 用于匹配的参数，传递给 main_get_category_and_level3 函数。
+
+    返回:
+        str: 与 Level 2 相关的附加信息组成的字符串，格式为 "subject relation object1, object2"。
+             如果没有找到相关信息，则返回 None。
+    """
+    # 获取与参与者相关的 Level 2 值
     level_2_values=main_get_category_and_level3(match_n,participant_no,top_n)
     additional_info = []
+    
+    # 如果没有获取到 Level 2 值，则输出提示并返回 None
     if not level_2_values:
         print(f"No data found for Participant No.: {participant_no}")
         return None
+
+    # 遍历每个 Level 2 值，查找对应的 Level 3 描述
     for level_2_value in level_2_values:
+        # 根据 Level 2 值查找所有相关的 Level 3 描述
         relevant_level_3_descriptions = [desc for desc, level2 in level_3_to_level_2.items() if level2 == level_2_value]
         print("Relevant Level 3 Descriptions:", relevant_level_3_descriptions)
+        
+        # 如果没有找到 Level 3 描述，则跳过当前 Level 2 值
         if not relevant_level_3_descriptions:
             print("No Level 3 descriptions found for Level 2:", level_2_value)
             continue
 
+        # 读取知识图谱数据
         kg_data = pd.read_excel(kg_path, usecols=['subject', 'relation', 'object'])
         if kg_data.empty:
             print("Knowledge graph data is empty.")
             return None
 
+        # 存储合并后的信息，键为 (subject, relation)，值为 object 列表
         merged_info = {}
 
+        # 遍历每个 Level 3 描述，查找知识图谱中的相关信息
         for level_3 in relevant_level_3_descriptions:
             related_info = kg_data[kg_data['subject'] == level_3]
 
+            # 如果没有找到相关信息，则输出提示
             if related_info.empty:
                 print(f"No related information found in KG for: {level_3}")
             else:
+                # 遍历每一行相关信息，合并相同 (subject, relation) 的 object
                 for _, row in related_info.iterrows():
                     subject = row['subject']
                     relation = row['relation'].replace('_', ' ')
@@ -173,16 +200,18 @@ def get_additional_info_from_level_2(participant_no,  kg_path,top_n,match_n):
                     else:
                         merged_info[(subject, relation)] = [obj]
 
-        # K
+        # 将合并后的信息格式化为句子并添加到 additional_info 列表中
         additional_info = []
         for (subject, relation), objects in merged_info.items():
             sentence = f"{subject} {relation} {', '.join(objects)}"
             additional_info.append(sentence)
 
+    # 如果没有找到任何附加信息，则输出提示并返回 None
     if not additional_info:
         print("No additional information found.")
         return None
 
+    # 将所有附加信息合并为一个字符串并返回
     final_info = ', '.join(additional_info)
     print("Additional Info:", final_info)
     return final_info
@@ -194,7 +223,10 @@ def get_system_prompt_for_RAGKG():
     返回:
         str: 包含详细指导的系统提示文本，规定了AI在诊断、治疗和建议方面的行为准则。
     """
-    return '''
+    with open('prompt.txt', 'r',encoding='utf-8') as file:
+        prompt_for_RAGKG = file.read().strip()
+    return prompt_for_RAGKG
+    '''
         # 角色定义
         You are a knowledgeable medical assistant with expertise in pain management.
         # 任务描述

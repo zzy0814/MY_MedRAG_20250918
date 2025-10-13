@@ -40,13 +40,35 @@ embedding_save_path = './Embeddings_saved/CP_KG_embeddings'  # 词向量保存�
 
 
 def preprocess_text(text):
+    """
+    对文本进行预处理，清理和标准化文本内容
+    
+    参数:
+        text (str): 需要预处理的原始文本
+    
+    返回:
+        str: 预处理后的文本，以空格分隔的词元序列
+    """
+    # 检查文本是否为空值，如果是则返回空字符串
     if pd.isna(text):
         return ''
+    
+    # 移除括号及其内部内容，去除首尾空白字符
     text = re.sub(r'\(.*?\)', '', text).strip()
+    
+    # 将下划线替换为空格
     text = text.replace('_', ' ')
+    
+    # 转换为小写
     text = text.lower()
+    
+    # 移除所有标点符号
     text = text.translate(str.maketrans('', '', string.punctuation))
+    
+    # 对文本进行分词处理
     tokens = word_tokenize(text)
+    
+    # 将词元列表重新组合成字符串并返回
     return ' '.join(tokens)
 
 
@@ -97,26 +119,47 @@ symptom_embeddings = get_symptom_embeddings(symptom_nodes, embedding_save_path)
 
 
 def find_top_n_similar_symptoms(query, symptom_nodes, symptom_embeddings, n):
+    """
+    根据查询文本找到最相似的N个症状节点
+    
+    参数:
+        query (str): 查询文本，用于匹配相似症状
+        symptom_nodes (list): 症状节点列表，包含所有可能的症状名称
+        symptom_embeddings (list): 症状嵌入向量列表，与symptom_nodes一一对应
+        n (int): 需要返回的最相似症状的数量
+    
+    返回:
+        list: 包含最相似的N个症状节点的列表，按相似度降序排列
+    """
+    # 检查查询文本是否为空或无效
     if pd.isna(query) or not query:
         return []
+    
+    # 预处理查询文本并生成嵌入向量
     query_preprocessed = preprocess_text(query)
     response = client.embeddings.create(
         input=query_preprocessed,
         model="text-embedding-3-large"
     )
     query_embedding = response.data[0].embedding
+    
+    # 如果查询嵌入向量为空，则返回空列表
     if not query_embedding:
         return []
 
+    # 确保嵌入向量数量不超过节点数量，避免索引越界
     if len(symptom_embeddings) > len(symptom_nodes):
         symptom_embeddings = symptom_embeddings[:len(symptom_nodes)]
 
+    # 计算查询向量与所有症状向量的余弦相似度
     similarities = cosine_similarity([query_embedding], symptom_embeddings).flatten()
 
+    # 按相似度降序排列，找出最相似的症状
     top_n_symptoms = []
     unique_symptoms = set()
     top_n_indices = similarities.argsort()[::-1]
 
+    # 遍历排序后的索引，筛选出相似度大于0.5且不重复的症状
     for i in top_n_indices:
         if similarities[i] > 0.5 and symptom_nodes[i] not in unique_symptoms:
             top_n_symptoms.append(symptom_nodes[i])
@@ -125,7 +168,6 @@ def find_top_n_similar_symptoms(query, symptom_nodes, symptom_embeddings, n):
             break
 
     return top_n_symptoms
-
 
 def compute_shortest_path_length(node1, node2, G):
     try:
@@ -297,8 +339,22 @@ def main_get_category_and_level3(n, participant_no,top_n):
 
 
     def process_symptom_field(field_value, symptom_nodes, symptom_embeddings, n):
+        """
+        处理症状字段值，查找并返回最相似的症状节点
+        
+        参数:
+            field_value: 症状字段的值，可能为字符串或NaN
+            symptom_nodes: 症状节点列表，用于相似度匹配的候选集合
+            symptom_embeddings: 症状嵌入向量，与symptom_nodes对应，用于计算相似度
+            n: 返回最相似症状的数量上限
+            
+        返回值:
+            list: 包含最相似的n个症状节点的列表，如果输入为空则返回空列表
+        """
+        # 检查字段值是否为空或NaN，如果是则直接返回空列表
         if pd.isna(field_value) or field_value == '':
             return []
+        # 调用相似度查找函数，返回最相似的n个症状
         return find_top_n_similar_symptoms(field_value, symptom_nodes, symptom_embeddings, n)
 
     top_5_location_nodes = process_symptom_field(pain_location, symptom_nodes, symptom_embeddings, n)

@@ -139,7 +139,8 @@ def find_top_n_similar_symptoms(query, symptom_nodes, symptom_embeddings, n):
     query_preprocessed = preprocess_text(query)
     response = client.embeddings.create(
         input=query_preprocessed,
-        model="text-embedding-3-large"
+        #model="text-embedding-3-large"
+        model="deepseek-embed"
     )
     query_embedding = response.data[0].embedding
     

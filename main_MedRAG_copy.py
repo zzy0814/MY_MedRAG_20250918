@@ -152,13 +152,13 @@ def get_additional_info_from_level_2(participant_no,  kg_path,top_n,match_n):
         str: 与 Level 2 相关的附加信息组成的字符串，格式为 "subject relation object1, object2"。
              如果没有找到相关信息，则返回 None。
     """
-    # 获取与参与者相关的 Level 2 值
+    # 获取与参与者相关的 Level 2 值  
     level_2_values=main_get_category_and_level3(match_n,participant_no,top_n)
     additional_info = []
     
     # 如果没有获取到 Level 2 值，则输出提示并返回 None
     if not level_2_values:
-        print(f"No data found for Participant No.: {participant_no}")
+        print(f"没有找到任何关于以下患者的信息: {participant_no}")
         return None
 
     # 遍历每个 Level 2 值，查找对应的 Level 3 描述
@@ -305,7 +305,7 @@ def generate_diagnosis_report(path, query, retrieved_documents, i, top_n, match_
 
     ############################################################################################openai
     # 判断是否使用 OpenAI 的模型进行推理
-    if model == 'gpt-4o' or 'gpt-4o-mini' or 'gpt-3.5-turbo-0125':
+    if model in ['gpt-4o', 'deepseek', 'gpt-4o-mini', 'gpt-3.5-turbo-0125']:
         # 调用 OpenAI 接口生成诊断报告
         response = client.chat.completions.create(
             model=model,

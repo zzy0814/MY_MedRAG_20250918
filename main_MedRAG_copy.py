@@ -275,16 +275,38 @@ def get_system_prompt_for_RAGKG():
     '''
 
 
-def generate_diagnosis_report(path, query, retrieved_documents, i,top_n,match_n,model):
-    system_prompt_RAGKG = get_system_prompt_for_RAGKG()
-    system_prompt=system_prompt_RAGKG
-    additional_info= get_additional_info_from_level_2(i ,path,top_n=top_n,match_n=match_n)
+def generate_diagnosis_report(path, query, retrieved_documents, i, top_n, match_n, model):
+    """
+    生成诊断报告的函数。根据输入的查询、检索到的文档以及知识图谱中的附加信息，
+    使用指定的大语言模型（LLM）生成结构化的诊断报告。
 
+    参数:
+        path (str): 知识图谱数据的路径，用于获取附加信息。
+        query (str): 用户的查询内容，通常是患者的症状或初步诊断请求。
+        retrieved_documents (list): 检索系统返回的相关文档列表。
+        i (int): 当前处理的样本索引，用于标识特定病例。
+        top_n (int): 从知识图谱中提取相关信息时考虑的顶级匹配项数量。
+        match_n (int): 匹配阈值或相关性评分限制。
+        model (str): 使用的语言模型名称，例如 'gpt-4o' 或 'meta-llama/Meta-Llama-3.1-8B-Instruct'。
+
+    返回:
+        str: 由大语言模型生成的诊断报告内容。
+    """
+
+    # 获取用于RAG+KG任务的系统提示词
+    system_prompt_RAGKG = get_system_prompt_for_RAGKG()
+    system_prompt = system_prompt_RAGKG
+
+    # 从知识图谱中获取与当前病例相关的附加信息
+    additional_info = get_additional_info_from_level_2(i, path, top_n=top_n, match_n=match_n)
+
+    # 构建最终输入给语言模型的提示词
     prompt = f"{query}\nRetrieved Documents: {retrieved_documents}\nInformation from knowledge graph about relevant diagnoses, if you think the patient's disease is relevant from the suggestions provided by the atlas please refer to thoses details to distinguish similar diagnoses : {additional_info} .Now complete the tasks in that format"
 
-
     ############################################################################################openai
-    if model =='gpt-4o' or 'gpt-4o-mini' or 'gpt-3.5-turbo-0125':
+    # 判断是否使用 OpenAI 的模型进行推理
+    if model == 'gpt-4o' or 'gpt-4o-mini' or 'gpt-3.5-turbo-0125':
+        # 调用 OpenAI 接口生成诊断报告
         response = client.chat.completions.create(
             model=model,
             messages=[
@@ -294,7 +316,8 @@ def generate_diagnosis_report(path, query, retrieved_documents, i,top_n,match_n,
         )
         return response.choices[0].message.content
     else:
-        prompt=f"""<s>[INST] <<SYS>> {system_prompt} <</SYS>> {prompt} [/INST]"""
+        # 否则使用 Hugging Face 提供的推理客户端调用开源模型
+        prompt = f"""<s>[INST] <<SYS>> {system_prompt} <</SYS>> {prompt} [/INST]"""
         LLMclient = InferenceClient(
             "meta-llama/Meta-Llama-3.1-8B-Instruct",
             # "meta-llama/Llama-2-13b-chat-hf",
@@ -306,7 +329,8 @@ def generate_diagnosis_report(path, query, retrieved_documents, i,top_n,match_n,
             # 'mistralai/Mixtral-8x7B-Instruct-v0.1',
             token=hf_token
         )
-        response = LLMclient.text_generation(prompt=prompt,max_new_tokens=400)
+        # 调用模型生成文本，最大生成长度为400个token
+        response = LLMclient.text_generation(prompt=prompt, max_new_tokens=400)
         return response
 
 def save_results_to_csv(results, output_file):
